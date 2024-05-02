@@ -15,3 +15,10 @@ CPT412 Human-Robot-Interaction CourseWork
 ## 项目分工
 * unity_part主要由YRZ负责编写
 * python_part主要由HZY负责编写
+
+
+
+
+
+
+## 如何运行
