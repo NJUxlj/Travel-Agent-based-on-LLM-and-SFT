@@ -7,8 +7,8 @@ import os
 
 # 代理地址
 # os.environ["OPENAI_API_BASE"] = "http://{your proxy url}/v1"
-os.environ['http_proxy'] = 'http://127.0.0.1:7890'
-os.environ['https_proxy'] = 'http://127.0.0.1:7890'
+# os.environ['http_proxy'] = 'http://127.0.0.1:7890'
+# os.environ['https_proxy'] = 'http://127.0.0.1:7890'
 
 
 
