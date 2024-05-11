@@ -3,7 +3,8 @@ import numpy as np
 import openai
 
 # 设置你的OpenAI API 密钥
-api_key = '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'
+import os
+api_key = os.environ.get("OPENAI_API_KEY")
 openai.api_key = api_key
 
 # 录音参数

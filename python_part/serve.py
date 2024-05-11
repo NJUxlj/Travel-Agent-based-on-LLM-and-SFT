@@ -22,7 +22,7 @@ Head to http://localhost:8000/agent/playground/ to try it out!
 '''
 
 import os
-os.environ["OPENAI_API_KEY"] = "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"
+
 
 # 代理地址
 # os.environ["OPENAI_API_BASE"] = "http://{your proxy url}/v1"
