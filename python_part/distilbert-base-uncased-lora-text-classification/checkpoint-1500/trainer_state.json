@@ -1,0 +1,108 @@
+{
+  "best_metric": 0.3683958053588867,
+  "best_model_checkpoint": "distilbert-base-uncased-lora-text-classification\\checkpoint-500",
+  "epoch": 6.0,
+  "eval_steps": 500,
+  "global_step": 1500,
+  "is_hyper_param_search": false,
+  "is_local_process_zero": true,
+  "is_world_process_zero": true,
+  "log_history": [
+    {
+      "epoch": 1.0,
+      "eval_accuracy": {
+        "accuracy": 0.875
+      },
+      "eval_loss": 0.4255279004573822,
+      "eval_runtime": 25.9271,
+      "eval_samples_per_second": 38.57,
+      "eval_steps_per_second": 9.642,
+      "step": 250
+    },
+    {
+      "epoch": 2.0,
+      "grad_norm": 21.978382110595703,
+      "learning_rate": 0.0008,
+      "loss": 0.4013,
+      "step": 500
+    },
+    {
+      "epoch": 2.0,
+      "eval_accuracy": {
+        "accuracy": 0.894
+      },
+      "eval_loss": 0.3683958053588867,
+      "eval_runtime": 24.989,
+      "eval_samples_per_second": 40.018,
+      "eval_steps_per_second": 10.004,
+      "step": 500
+    },
+    {
+      "epoch": 3.0,
+      "eval_accuracy": {
+        "accuracy": 0.889
+      },
+      "eval_loss": 0.5600558519363403,
+      "eval_runtime": 24.3188,
+      "eval_samples_per_second": 41.12,
+      "eval_steps_per_second": 10.28,
+      "step": 750
+    },
+    {
+      "epoch": 4.0,
+      "grad_norm": 53.85121154785156,
+      "learning_rate": 0.0006,
+      "loss": 0.1851,
+      "step": 1000
+    },
+    {
+      "epoch": 4.0,
+      "eval_accuracy": {
+        "accuracy": 0.884
+      },
+      "eval_loss": 0.6904951333999634,
+      "eval_runtime": 23.8522,
+      "eval_samples_per_second": 41.925,
+      "eval_steps_per_second": 10.481,
+      "step": 1000
+    },
+    {
+      "epoch": 5.0,
+      "eval_accuracy": {
+        "accuracy": 0.891
+      },
+      "eval_loss": 0.7438757419586182,
+      "eval_runtime": 23.8783,
+      "eval_samples_per_second": 41.879,
+      "eval_steps_per_second": 10.47,
+      "step": 1250
+    },
+    {
+      "epoch": 6.0,
+      "grad_norm": 6.653351738350466e-05,
+      "learning_rate": 0.0004,
+      "loss": 0.0681,
+      "step": 1500
+    },
+    {
+      "epoch": 6.0,
+      "eval_accuracy": {
+        "accuracy": 0.894
+      },
+      "eval_loss": 0.8352395296096802,
+      "eval_runtime": 23.7352,
+      "eval_samples_per_second": 42.132,
+      "eval_steps_per_second": 10.533,
+      "step": 1500
+    }
+  ],
+  "logging_steps": 500,
+  "max_steps": 2500,
+  "num_input_tokens_seen": 0,
+  "num_train_epochs": 10,
+  "save_steps": 500,
+  "total_flos": 666251705306016.0,
+  "train_batch_size": 4,
+  "trial_name": null,
+  "trial_params": null
+}
