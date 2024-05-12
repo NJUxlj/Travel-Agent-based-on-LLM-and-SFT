@@ -52,7 +52,7 @@ llm = llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
 
 
 # llm = Ollama(model="gemma:2b")
-loader = WebBaseLoader("https://discuss.huggingface.co/t/how-should-a-absolute-beginners-start-learning-ml-llm-in-2024/67655")
+loader = WebBaseLoader("https://www.kayak.com/explore/BJS-LAX")
 docs = loader.load()
 # 分词器模型
 text_splitter = RecursiveCharacterTextSplitter()
@@ -92,4 +92,4 @@ prompt = hub.pull("hwchase17/openai-functions-agent")
 
 agent = create_openai_functions_agent(llm, tools, prompt)
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-agent_executor.invoke({"input": "新手应该如何学习LLM?"})
+agent_executor.invoke({"input": "帮我规划一条从北京到洛杉矶的旅游路线"})
