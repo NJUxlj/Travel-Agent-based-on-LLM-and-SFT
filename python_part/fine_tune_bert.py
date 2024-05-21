@@ -192,3 +192,13 @@ for text in text_list:
     predictions = torch.max(logits,1).indices
 
     print(text + " - " + id2label[predictions.tolist()[0]])
+    
+    
+    
+    
+# 保存模型
+model_path = "C:/Users/hzy/Desktop/CPT412/ft-models/bert"
+model.save_pretrained(model_path)
+
+# 保存tokenizer
+tokenizer.save_pretrained(model_path)

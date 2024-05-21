@@ -37,7 +37,7 @@ documents = text_splitter.split_documents(docs)
 embeddings = OpenAIEmbeddings()
 vector = FAISS.from_documents(documents, embeddings)
 retriever = vector.as_retriever()
-
+      
 # 2. Create Tools
 retriever_tool = create_retriever_tool(
     retriever,

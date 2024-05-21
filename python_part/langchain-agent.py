@@ -45,14 +45,16 @@ import os
 os.environ['http_proxy'] = 'http://127.0.0.1:7890'
 os.environ['https_proxy'] = 'http://127.0.0.1:7890'
 
-llm = llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+
+
+llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
 # text = "⽤中⽂告诉我你能做什么?"
 # print(llm(text))
 
 
 
 # llm = Ollama(model="gemma:2b")
-loader = WebBaseLoader("https://www.kayak.com/explore/BJS-LAX")
+loader = WebBaseLoader("https://www.kayak.com/best-time-to-travel?origin=PVG&destination=TAO")
 docs = loader.load()
 # 分词器模型
 text_splitter = RecursiveCharacterTextSplitter()
@@ -70,7 +72,7 @@ prompt = ChatPromptTemplate.from_template("""Answer the following question based
 <context>
 {context}
 </context>
-
+y
 Question: {input}""")
 
 document_chain = create_stuff_documents_chain(llm, prompt)
@@ -92,4 +94,4 @@ prompt = hub.pull("hwchase17/openai-functions-agent")
 
 agent = create_openai_functions_agent(llm, tools, prompt)
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-agent_executor.invoke({"input": "Plan me a route from Beijing to Los Angeles"})
+agent_executor.invoke({"input": "帮我规划一条从北京到上海的旅游路线"})
