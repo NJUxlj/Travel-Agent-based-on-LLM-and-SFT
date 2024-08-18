@@ -1,4 +1,4 @@
-# cpt-412-hri
+# 基于huggingface模型微调与RAG的旅游路线规划师
 CPT412 Human-Robot-Interaction CourseWork
 
 ## 主题：LLM-based Travel Agent
@@ -9,14 +9,6 @@ CPT412 Human-Robot-Interaction CourseWork
    * 存储Unity代码的unity_part
    * 存储python代码的python_part
 2. 项目中期，我会在Unity里面集成python部分
-
-
-
-## 项目分工
-* unity_part主要由YRZ负责编写
-* python_part主要由HZY负责编写
-
-
 
 
 
