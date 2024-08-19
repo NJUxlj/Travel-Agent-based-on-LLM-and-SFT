@@ -1,16 +1,23 @@
-# 基于huggingface模型微调与RAG的旅游路线规划师
-CPT412 Human-Robot-Interaction CourseWork
+# 此处解释python部分代码的功能
 
-## 主题：LLM-based Travel Agent
+## 环境配置
 
+注册HuggingFace
+配置HF_TOKEN到环境变量
 
-## 项目结构
-1. 本项目分为两个部分
-   * 存储Unity代码的unity_part
-   * 存储python代码的python_part
-2. 项目中期，我会在Unity里面集成python部分
+```python
+conda create -name 'xxx' python=3.8
 
+conda activate xxx
 
+pip install sklearn
+pip install torch
+pip install numpy
+pip install pandas
 
-
-## 如何运行
+pip install transformers
+pip install langchain
+pip install peft
+pip install datasets
+pip install bitsandbytes
+```
