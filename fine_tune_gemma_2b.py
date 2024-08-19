@@ -48,9 +48,9 @@ from datasets import load_dataset
 
 
 
-train_split = load_dataset("json",data_files="datasets/bitext-travel-llm-chatbot-training-dataset.csv", split="train")
+train_split = load_dataset("csv",data_files="datasets/bitext-travel-llm-chatbot-training-dataset.csv", split = "train[-20%:]")
+test_split = load_dataset("csv",data_files="datasets/bitext-travel-llm-chatbot-training-dataset.csv",split = "train[:80%]")
 
-eval_split = load_dataset("json",data_files="datasets/bitext-travel-llm-chatbot-training-dataset.csv", split="validation")
 
 lora_config = LoraConfig(
     r=8,
@@ -61,14 +61,21 @@ lora_config = LoraConfig(
 
 
 
-model_id = "google/gemma-2b"
+# model_id = "google/gemma-2b"
+
+# 我们先把模型下载到本地目录
+model_id = "model_weights/"
+
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
     bnb_4bit_quant_type="nf4",
     bnb_4bit_compute_dtype=torch.bfloat16
 )
 
-tokenizer_id = 'distilbert-base-uncased'
+# tokenizer_id = 'distilbert-base-uncased'
+
+# tokenizer也一起下到本地目录
+tokenizer_id = "model_weights/"
 
 # tokenizer = AutoTokenizer.from_pretrained(tokenizer_id, token=os.environ['HF_TOKEN'])
 # model = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=bnb_config, device_map={"":0}, token=os.environ['HF_TOKEN'])
