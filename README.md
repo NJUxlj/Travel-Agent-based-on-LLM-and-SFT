@@ -1,4 +1,4 @@
-# 此处解释python部分代码的功能
+## 基于huggingface大模型微调+RLHF+RAG的旅游路径规划智能体
 
 ## 环境配置
 
