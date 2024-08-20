@@ -5,11 +5,14 @@ from datasets import load_dataset_builder
 from datasets import load_dataset
 
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from transformers import TrainingArguments, Trainer
 
 from peft import LoraConfig
 
 
 from trl import SFTTrainer
+
+import evaluate
 
 
 # modelscope
@@ -52,6 +55,13 @@ train_split = load_dataset("csv",data_files="datasets/bitext-travel-llm-chatbot-
 test_split = load_dataset("csv",data_files="datasets/bitext-travel-llm-chatbot-training-dataset.csv",split = "train[:80%]")
 
 
+
+# 只保留两列， 去除其余的多余列
+
+
+
+
+
 lora_config = LoraConfig(
     r=8,
     target_modules=["q_proj", "o_proj", "k_proj", "v_proj", "gate_proj", "up_proj", "down_proj"],
@@ -64,7 +74,7 @@ lora_config = LoraConfig(
 # model_id = "google/gemma-2b"
 
 # 我们先把模型下载到本地目录
-model_id = "model_weights/"
+model_id = "model_weights/gemma-2b"
 
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
@@ -75,31 +85,47 @@ bnb_config = BitsAndBytesConfig(
 # tokenizer_id = 'distilbert-base-uncased'
 
 # tokenizer也一起下到本地目录
-tokenizer_id = "model_weights/"
+tokenizer_id = "model_weights/bert-base-chinese"
 
 # tokenizer = AutoTokenizer.from_pretrained(tokenizer_id, token=os.environ['HF_TOKEN'])
 # model = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=bnb_config, device_map={"":0}, token=os.environ['HF_TOKEN'])
 
 
+tokenizer = AutoTokenizer.from_pretrained(tokenizer_id)
+model = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=bnb_config, device_map={"":0})
+
+
+# batch tokenize the entire dataset
+def tokenization(examples):
+    pass
 
 
 
 
-
-
-# text = "Quote: Imagination is more"
+# 测试数据
+text = "Quote: Imagination is more"
 # device = "cuda:0"
-# inputs = tokenizer(text, return_tensors="pt").to(device)
+inputs = tokenizer(text, return_tensors="pt").to(DEVICE)
 
-# outputs = model.generate(**inputs, max_new_tokens=20)
-# print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+
+
+
+# 推理
+outputs = model.generate(input, max_new_tokens=20)
+print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 
 
 # data = load_dataset("Abirate/english_quotes")
 
-data = data.map(lambda samples: tokenizer(samples["quote"]), batched=True)
+# data = data.map(lambda samples: tokenizer(samples["quote"]), batched=True)
 
 
+
+training_args = TrainingArguments(output_dir="training_args_output", eval_strategy = "epoch")
+
+metric = evaluate.load("accuracy")
+
+'''
 
 def formatting_func(example):
     text = f"Quote: {example['quote'][0]}\nAuthor: {example['author'][0]}<eos>"
@@ -167,3 +193,4 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 
 # model.push_to_hub(model_id)
 # trainer.push_to_hub(model_id)
+'''
