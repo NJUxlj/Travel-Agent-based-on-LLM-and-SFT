@@ -53,7 +53,7 @@ rag_xxx.py 的文件都是用来做RAG的
 
 ```shell
 python fine_tune_gemma_2b.py
-···
+```
 
 
 ```shell
