@@ -187,14 +187,11 @@ class TRPOTrainer:
                     logits = self.model.forward(**tokens).logits.to(self.device)
                     log_probs = F.log_softmax(logits, dim=-1)  
                     
-                    # 多项式采样
-                    probs = torch.softmax(logits, dim=-1)
-                    response_ids = [] # 贪心采样， 可以改成多项式采样或者top-k，
-                    for i in range(probs.size(1)):  # 遍历每个token位置
-                        token_probs = probs[:, i, :]  # 获取当前token位置的概率分布 (batch_size, vocab_size)
-                        sampled_ids = torch.multinomial(token_probs, num_samples=1)  # (batch_size, 1)
-                        response_ids.append(sampled_ids)
-                    response_ids = torch.cat(response_ids, dim=-1)  # (batch_size, seq_len)
+                    # 多项式采样 - 向量化实现，提高效率
+                    probs = torch.softmax(logits, dim=-1)  # shape: (batch_size, seq_len, vocab_size)
+                    # 使用multinomial一次采样所有位置，避免循环
+                    response_ids = torch.multinomial(probs.view(-1, probs.size(-1)), num_samples=1)  # (batch_size * seq_len, 1)
+                    response_ids = response_ids.view(probs.size(0), probs.size(1))  # (batch_size, seq_len)
                     
                     # 只收集生成部分的log_prob
                     old_log_probs = torch.gather(  

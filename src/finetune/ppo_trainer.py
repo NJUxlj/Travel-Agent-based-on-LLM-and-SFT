@@ -195,7 +195,7 @@ class PPOTrainer:
         #     1                                 # 输出维度：单一值，表示状态价值  
         # ).to(self.model.device)  
         
-        self.critic_model = Critic(self.model.base_model).to(self.device)
+        self.critic_model = Critic(self.model).to(self.device)
         
         # 应用LoRA  
         if is_peft:  
@@ -288,14 +288,11 @@ class PPOTrainer:
                     logits = self.model.forward(**tokens).logits.to(self.device)
                     log_probs = F.log_softmax(logits, dim=-1)  
                     
-                    # 多项式采样
-                    probs = torch.softmax(logits, dim=-1)
-                    response_ids = [] # 贪心采样， 可以改成多项式采样或者top-k，
-                    for i in range(probs.size(1)):  # 遍历每个token位置
-                        token_probs = probs[:, i, :]  # 获取当前token位置的概率分布 (batch_size, vocab_size)
-                        sampled_ids = torch.multinomial(token_probs, num_samples=1)  # (batch_size, 1)
-                        response_ids.append(sampled_ids)
-                    response_ids = torch.cat(response_ids, dim=-1)  # (batch_size, seq_len)
+                    # 多项式采样 - 向量化实现，提高效率
+                    probs = torch.softmax(logits, dim=-1)  # shape: (batch_size, seq_len, vocab_size)
+                    # 使用multinomial一次采样所有位置，避免循环
+                    response_ids = torch.multinomial(probs.view(-1, probs.size(-1)), num_samples=1)  # (batch_size * seq_len, 1)
+                    response_ids = response_ids.view(probs.size(0), probs.size(1))  # (batch_size, seq_len)
                     
                     # 只收集生成部分的log_prob
                     old_log_probs = torch.gather(  
@@ -344,32 +341,48 @@ class PPOTrainer:
 
     def ppo_collator(self, batch):
         """自定义数据整理函数，用于处理PPO训练的数据批次"""
-        input_ids = [item["input_ids"] for item in batch]
-        attention_mask = [item["attention_mask"] for item in batch]
-        response_ids = [item["response_ids"] for item in batch]
-        old_log_probs = [item["old_log_probs"] for item in batch]
-        
+        # 预先转换所有字段为张量，避免循环中重复转换
+        input_ids_list = [item["input_ids"] for item in batch]
+        attention_mask_list = [item["attention_mask"] for item in batch]
+        response_ids_list = [item["response_ids"] for item in batch]
+        old_log_probs_list = [item["old_log_probs"] for item in batch]
+
         # 获取批次中的最大长度
-        max_len = min(max(len(ids) for ids in input_ids), self.max_seq_length)
-        
-        # 对输入进行填充，确保所有序列具有相同长度
-        padded_input_ids = torch.zeros((len(batch), max_len), dtype=torch.long)
-        padded_attention_mask = torch.zeros((len(batch), max_len), dtype=torch.long)
-        padded_response_ids = torch.zeros((len(batch), max_len), dtype=torch.long)
-        padded_old_log_probs = torch.zeros((len(batch), max_len), dtype=torch.float)
-        
-        for i in range(len(batch)):
-            seq_len = min(len(input_ids[i]), max_len)
-            padded_input_ids[i, :seq_len] = torch.tensor(input_ids[i][:seq_len])
-            padded_attention_mask[i, :seq_len] = torch.tensor(attention_mask[i][:seq_len])
-            padded_response_ids[i, :seq_len] = torch.tensor(response_ids[i][:seq_len])
-            
-            # 处理old_log_probs，确保维度匹配
-            log_prob_len = len(old_log_probs[i])
-            if log_prob_len > 0:
-                log_prob_seq_len = min(log_prob_len, seq_len)
-                padded_old_log_probs[i, :log_prob_seq_len] = torch.tensor(old_log_probs[i][:log_prob_seq_len], dtype=torch.float)
-        
+        max_len = min(max(len(ids) for ids in input_ids_list), self.max_seq_length)
+
+        batch_size = len(batch)
+
+        # 预先转换列表为张量，使用stack一次完成
+        input_ids_tensor = torch.stack([
+            torch.as_tensor(ids[:max_len], dtype=torch.long) for ids in input_ids_list
+        ])
+        attention_mask_tensor = torch.stack([
+            torch.as_tensor(mask[:max_len], dtype=torch.long) for mask in attention_mask_list
+        ])
+        response_ids_tensor = torch.stack([
+            torch.as_tensor(ids[:max_len], dtype=torch.long) for ids in response_ids_list
+        ])
+        old_log_probs_tensor = torch.stack([
+            torch.as_tensor(lp[:max_len], dtype=torch.float) for lp in old_log_probs_list
+        ])
+
+        # 创建填充后的张量
+        padded_input_ids = torch.zeros((batch_size, max_len), dtype=torch.long)
+        padded_attention_mask = torch.zeros((batch_size, max_len), dtype=torch.long)
+        padded_response_ids = torch.zeros((batch_size, max_len), dtype=torch.long)
+        padded_old_log_probs = torch.zeros((batch_size, max_len), dtype=torch.float)
+
+        # 计算每个序列的实际长度
+        lengths = torch.tensor([min(len(ids), max_len) for ids in input_ids_list], dtype=torch.long)
+
+        # 使用scatter将数据填充到正确位置
+        for i in range(batch_size):
+            seq_len = lengths[i].item()
+            padded_input_ids[i, :seq_len] = input_ids_tensor[i, :seq_len]
+            padded_attention_mask[i, :seq_len] = attention_mask_tensor[i, :seq_len]
+            padded_response_ids[i, :seq_len] = response_ids_tensor[i, :seq_len]
+            padded_old_log_probs[i, :seq_len] = old_log_probs_tensor[i, :seq_len]
+
         return {
             "input_ids": padded_input_ids,
             "attention_mask": padded_attention_mask,

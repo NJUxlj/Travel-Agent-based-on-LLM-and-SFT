@@ -1,34 +1,38 @@
-import torch  
-import torch.nn as nn  
-import os  
-from torch.utils.data import Dataset  
-from transformers import (  
-    AutoTokenizer,  
-    Qwen2ForCausalLM,  
-    TrainingArguments,  
-    Trainer,  
-    BitsAndBytesConfig  
-)  
-from peft import LoraConfig, get_peft_model  
+import torch
+import torch.nn as nn
+import os
+from torch.utils.data import Dataset
+from transformers import (
+    AutoTokenizer,
+    Qwen2ForCausalLM,
+    TrainingArguments,
+    Trainer,
+    BitsAndBytesConfig
+)
+from peft import LoraConfig, get_peft_model
 from datasets import load_dataset, DatasetDict
-from typing import Optional, Dict, List, Union, Tuple  
-import torch.nn.functional as F  
-from dataclasses import dataclass  
-import numpy as np  
-import copy  
-from torch.nn.utils.rnn import pad_sequence  
+from typing import Optional, Dict, List, Union, Tuple
+import torch.nn.functional as F
+from dataclasses import dataclass
+import numpy as np
+import copy
+from torch.nn.utils.rnn import pad_sequence
 
-from src.configs.config import (  
-    MODEL_PATH,  
+from src.configs.config import (
+    MODEL_PATH,
     DATA_PATH,
-    DPO_DATA_PATH,  
-    CACHED_DPO_DATA_PATH,  
+    DPO_DATA_PATH,
+    CACHED_DPO_DATA_PATH,
     GRPO_MODEL_PATH,
     CACHED_GRPO_DATA_PATH,
-)  
+)
 
 
 from src.evaluation.qa_evaluate import QAEvaluator
+from src.finetune.base_trainer import (
+    init_model_and_tokenizer,
+    create_default_lora_config,
+)
 
 
 '''
@@ -342,39 +346,21 @@ class GRPOTrainerWrapper:
             # compute_metrics=self._compute_metrics,
         )  
 
-    def _init_model_and_tokenizer(self, model_name, is_quantized, bnb_config):  
-        bnb_config = bnb_config or BitsAndBytesConfig(  
-            load_in_4bit=True,  
-            bnb_4bit_quant_type="nf4",  
-            bnb_4bit_compute_dtype=torch.bfloat16,  
-            bnb_4bit_use_double_quant=True,  
-        ) if is_quantized else None  
+    def _init_model_and_tokenizer(self, model_name, is_quantized, bnb_config):
+        """Initialize model and tokenizer using common utilities."""
+        return init_model_and_tokenizer(
+            model_name,
+            is_quantized,
+            bnb_config
+        )
 
-        tokenizer = AutoTokenizer.from_pretrained(model_name)  
-        tokenizer.pad_token = tokenizer.eos_token  
+    def _clone_model(self, model):
+        """Create a deep copy of the model."""
+        return copy.deepcopy(model)
 
-        model = Qwen2ForCausalLM.from_pretrained(  
-            model_name,  
-            quantization_config=bnb_config,  
-            device_map="auto",  
-            trust_remote_code=True  
-        )  
-        return model, tokenizer  
-
-    def _clone_model(self, model):  
-        """创建模型的深拷贝"""  
-        model_copy = copy.deepcopy(model)  
-        return model_copy  
-
-    def _default_lora_config(self):  
-        return LoraConfig(  
-            r=64,  
-            lora_alpha=16,  
-            lora_dropout=0.05,  
-            target_modules=["q_proj", "v_proj"],  
-            bias="none",  
-            task_type="CAUSAL_LM"  
-        )  
+    def _default_lora_config(self):
+        """Get default LoRA configuration using common utilities."""
+        return create_default_lora_config()
 
     def _prepare_dataset(self, train_size = 1000, eval_size = 500):  
         '''
@@ -620,13 +606,15 @@ class GRPOTrainerWrapper:
                 "attention_mask": torch.stack([f["attention_mask"] for f in features]),  
             }  
             
-            # 生成group_ids - 用于GRPO中区分不同问题的回答组  
-            batch_size = len(features)  
-            # 假设每2个样本组成一个组（chosen和rejected）  
-            group_ids = torch.arange(0, batch_size // 2, dtype=torch.long).repeat_interleave(2)  
-            if len(group_ids) < batch_size:  
-                # 如果最后一个组不完整，将其归入前一个组  
-                group_ids = torch.cat([group_ids, group_ids[-1:] * (batch_size - len(group_ids))])  
+            # 生成group_ids - 用于GRPO中区分不同问题的回答组
+            batch_size = len(features)
+            # 验证数据有效性：batch_size必须是偶数（每组包含chosen和rejected）
+            if batch_size % 2 != 0:
+                raise ValueError(f"Batch size must be even for GRPO training, got {batch_size}. "
+                                 f"Each group requires a chosen and rejected sample pair.")
+            # 每2个样本组成一个组（chosen和rejected）
+            num_groups = batch_size // 2
+            group_ids = torch.arange(0, num_groups, dtype=torch.long).repeat_interleave(2)
             batch["group_ids"] = group_ids  
             
             # 确保张量格式正确  

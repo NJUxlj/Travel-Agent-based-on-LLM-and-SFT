@@ -281,38 +281,30 @@ def load_qwen_in_4bit(
     if use_flash_attention:  
         model_kwargs["use_flash_attention_2"] = True  
     
-    # 加载模型  
-    model = Qwen2ForCausalLM.from_pretrained(  
-        model_name,  
-        **model_kwargs,  
-        low_cpu_mem_usage=True,  
-    )  
+    # 加载模型
+    model = Qwen2ForCausalLM.from_pretrained(
+        model_name,
+        **model_kwargs,
+        low_cpu_mem_usage=True,
+    )
 
-    torch.cuda.empty_cache()  
+    torch.cuda.empty_cache()
 
-    # 在模型加载后设置gradient checkpointing  
-    if hasattr(model, 'gradient_checkpointing_enable'):  
-        model.gradient_checkpointing_enable()  
-    elif hasattr(model, 'enable_gradient_checkpointing'):  
-        model.enable_gradient_checkpointing() 
+    # 在模型加载后设置gradient checkpointing
+    # gradient_checkpointing_enable() 已经正确处理了梯度检查点的设置
+    if hasattr(model, 'gradient_checkpointing_enable'):
+        model.gradient_checkpointing_enable()
+    elif hasattr(model, 'enable_gradient_checkpointing'):
+        model.enable_gradient_checkpointing()
 
-    # 禁用缓存  
-    model.config.use_cache = False  
+    # 禁用缓存
+    model.config.use_cache = False
 
-     # 注意：这种方法更细粒度，可以控制具体哪些层使用checkpoint  
-    for module in model.modules():  
-        if isinstance(module, torch.nn.TransformerEncoderLayer):
-            # 给forward加了一层包装，禁止计算中间层激活值  
-            module.forward = torch.utils.checkpoint.checkpoint(module.forward)  
-        elif isinstance(module, torch.nn.TransformerDecoderLayer):
-            module.forward = torch.utils.checkpoint.checkpoint(module.forward)
-    
-    
-    # 强制进行垃圾回收  
-    import gc  
-    gc.collect()    
-    torch.cuda.empty_cache()  
-    
+    # 强制进行垃圾回收
+    import gc
+    gc.collect()
+    torch.cuda.empty_cache()
+
     return model
 
 
@@ -354,38 +346,30 @@ def load_qwen(
     if use_flash_attention:  
         model_kwargs["use_flash_attention_2"] = True  
     
-    # 加载模型  
-    model = Qwen2ForCausalLM.from_pretrained(  
-        model_name,  
-        **model_kwargs,  
-        low_cpu_mem_usage=True,  
-    )  
+    # 加载模型
+    model = Qwen2ForCausalLM.from_pretrained(
+        model_name,
+        **model_kwargs,
+        low_cpu_mem_usage=True,
+    )
 
-    torch.cuda.empty_cache()  
+    torch.cuda.empty_cache()
 
-    # 在模型加载后设置gradient checkpointing  
-    if hasattr(model, 'gradient_checkpointing_enable'):  
-        model.gradient_checkpointing_enable()  
-    elif hasattr(model, 'enable_gradient_checkpointing'):  
-        model.enable_gradient_checkpointing() 
+    # 在模型加载后设置gradient checkpointing
+    # gradient_checkpointing_enable() 已经正确处理了梯度检查点的设置
+    if hasattr(model, 'gradient_checkpointing_enable'):
+        model.gradient_checkpointing_enable()
+    elif hasattr(model, 'enable_gradient_checkpointing'):
+        model.enable_gradient_checkpointing()
 
-    # 禁用缓存  
-    model.config.use_cache = False  
+    # 禁用缓存
+    model.config.use_cache = False
 
-     # 注意：这种方法更细粒度，可以控制具体哪些层使用checkpoint  
-    for module in model.modules():  
-        if isinstance(module, torch.nn.TransformerEncoderLayer):
-            # 给forward加了一层包装，禁止计算中间层激活值  
-            module.forward = torch.utils.checkpoint.checkpoint(module.forward)  
-        elif isinstance(module, torch.nn.TransformerDecoderLayer):
-            module.forward = torch.utils.checkpoint.checkpoint(module.forward)
-    
-    
-    # 强制进行垃圾回收  
-    import gc  
-    gc.collect()    
-    torch.cuda.empty_cache()  
-    
+    # 强制进行垃圾回收
+    import gc
+    gc.collect()
+    torch.cuda.empty_cache()
+
     return model
     
     

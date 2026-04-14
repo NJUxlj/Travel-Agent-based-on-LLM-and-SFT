@@ -1,9 +1,10 @@
-from typing import List, Tuple, Dict  
-from langchain_core.documents import Document  
-from langchain_community.retrievers.bm25 import BM25Retriever  
-from langchain_text_splitters import RecursiveCharacterTextSplitter  
-from zhipuai import ZhipuAI  
-import os  
+from typing import List, Tuple, Dict
+from pathlib import Path
+from langchain_core.documents import Document
+from langchain_community.retrievers.bm25 import BM25Retriever
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from zhipuai import ZhipuAI
+import os
 import requests  
 
 
@@ -45,7 +46,19 @@ class CorrectiveRAG:
     
     
     def load_corpus(self, corpus_folder_path):
-        pass
+        """Load corpus from a folder containing text files (one per city)."""
+        corpus = []
+        folder = Path(corpus_folder_path)
+        if not folder.exists():
+            print(f"Warning: Corpus folder {corpus_folder_path} does not exist.")
+            return corpus
+
+        for file_path in folder.glob("*.txt"):
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+                if content:
+                    corpus.append(content)
+        return corpus
     
     
     

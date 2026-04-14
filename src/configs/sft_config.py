@@ -52,18 +52,6 @@ class TrainingConfig:
     mixed_precision_dtype: str = "float16"
 
 
-@dataclass
-class DataPreprocessingConfig:
-    """数据预处理配置"""
-    # 最大源序列长度
-    max_source_length: int = 512
-    # 最大目标序列长度
-    max_target_length: int = 512
-    # 填充到最大长度
-    pad_to_max_length: bool = True
-    # 数据加载时的并行进程数
-    num_workers: int = 4
-
 
 @dataclass
 class DataConfig:
@@ -76,8 +64,15 @@ class DataConfig:
     max_train_samples: int = None
     # 最大验证样本数
     max_eval_samples: int = None
-    # 数据预处理配置
-    preprocessing: DataPreprocessingConfig = field(default_factory=DataPreprocessingConfig)
+    """数据预处理配置"""
+    # 最大输入序列长度
+    max_input_length: int = 512
+    # 最大输出序列长度
+    max_output_length: int = 512
+    # 填充到最大长度
+    pad_to_max_length: bool = True
+    # 数据加载时的并行进程数
+    num_workers: int = 4
 
 
 
@@ -91,3 +86,9 @@ class SFTConfig:
     data: DataConfig = field(default_factory=DataConfig)
 
 
+
+
+if __name__ == "__main__":
+    config = SFTConfig()
+    import json
+    print(json.dumps(asdict(config), indent=4))   

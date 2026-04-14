@@ -9,8 +9,10 @@ from self_rag import SelfRAG
 from rag_config import RAGType
 from typing import Literal, Callable, Dict, Tuple
 
-
-from configs.config import PDF_FOLDER_PATH
+from rag.rag import RAG
+from models.model import TravelAgent
+from configs.config import PDF_FOLDER_PATH, RAG_DATA_PATH, EMBEDDING_MODEL_PATH
+from zhipuai import ZhipuAI
 
 import asyncio
 
@@ -38,7 +40,12 @@ class RAGDispatcher():
             return self.corrective_rag(query)
         
     def rag(self, query:str):
-        pass
+        """Standard RAG: retrieve relevant documents from database and return them."""
+        agent = TravelAgent()
+        rag = RAG(agent=agent, use_db=True, use_api=True)
+
+        results = rag.query_db(query, n_results=5)
+        return results
     
     async def mem_walker(self,query:str)->str:
         builder = MemoryTreeBuilder()
@@ -74,5 +81,59 @@ class RAGDispatcher():
     
     
     def corrective_rag(self, query:str):
-        pass
+        """Corrective RAG: query with original query, if results are poor, reformulate and retry."""
+        # Initialize RAG components for database querying
+        agent = TravelAgent()
+        rag = RAG(agent=agent, use_db=True, use_api=True)
+
+        # First attempt with original query
+        initial_results = rag.query_db(query, n_results=5)
+
+        # Check if results meet quality threshold
+        if len(initial_results) >= 3 and self._check_quality(initial_results):
+            return initial_results
+
+        # If results are insufficient, reformulate the query and retry
+        reformulated_query = self._reformulate_query(query, initial_results)
+        corrected_results = rag.query_db(reformulated_query, n_results=5)
+
+        # Combine and deduplicate results
+        combined = self._merge_results(initial_results, corrected_results)
+        return combined[:5]
+
+    def _check_quality(self, results: list, min_length: int = 50) -> bool:
+        """Check if results meet minimum quality threshold."""
+        if not results:
+            return False
+        avg_length = sum(len(str(r)) for r in results) / len(results)
+        return avg_length >= min_length
+
+    def _reformulate_query(self, original_query: str, previous_results: list) -> str:
+        """Reformulate query based on previous results to improve retrieval."""
+        # Use LLM to reformulate query if available, otherwise use keyword expansion
+        context = "\n".join(str(r)[:200] for r in previous_results[:2])
+
+        reformulation_prompt = f"基于以下上下文，优化搜索查询以获得更好的旅行规划结果。\n\n原始查询：{original_query}\n\n相关上下文：{context}\n\n请提供一个更精确的搜索查询（只返回查询语句，不要其他内容）："
+
+        try:
+            client = ZhipuAI(api_key=os.environ.get("ZHIPU_API_KEY"))
+            response = client.chat.completions.create(
+                model="glm-4-flash",
+                messages=[{"role": "user", "content": reformulation_prompt}],
+            )
+            return response.choices[0].message.content.strip()
+        except Exception:
+            # Fallback: append common travel-related terms
+            return f"{original_query} 旅游攻略 景点推荐"
+
+    def _merge_results(self, results1: list, results2: list) -> list:
+        """Merge and deduplicate results from multiple queries."""
+        seen = set()
+        merged = []
+        for r in results1 + results2:
+            key = str(r)[:100]
+            if key not in seen:
+                seen.add(key)
+                merged.append(r)
+        return merged
 

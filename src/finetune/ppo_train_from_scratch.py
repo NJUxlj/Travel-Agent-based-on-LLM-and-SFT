@@ -467,9 +467,8 @@ def generate_samples(
         )
         
         samples_list.append(samples)
-        
-    
-        return samples_list
+
+    return samples_list
     
     
 

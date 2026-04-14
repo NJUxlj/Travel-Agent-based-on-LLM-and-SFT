@@ -168,7 +168,8 @@ class MultiTaskTrainer:
             warmup_steps=100,
             warmup_ratio=0.03,
             lr_scheduler_type="cosine",
-            bf16=True,
+            # DeepSpeed使用自己的bf16/fp16配置，不需要在TrainingArguments中设置
+            bf16=False,
             fp16=False,
             logging_dir="./logs",
             logging_strategy="steps",

@@ -53,7 +53,7 @@ class SelfRAGBase:
             return response.choices[0].message.content
         elif model_type == "huggingface":
             tokenizer = AutoTokenizer.from_pretrained(SFT_MODEL_PATH, trust_remote_code = True)
-            model = AutoModelForSeq2SeqLM
+            model = AutoModelForSeq2SeqLM.from_pretrained(SFT_MODEL_PATH)
             pipe = pipeline(
                 task="text-generation",
                 model = model,

@@ -197,8 +197,7 @@ class TravelAgent:
         with torch.no_grad():
             outputs = self.model.generate(
                 **inputs,
-                max_length=max_length,
-                max_new_tokens = max_length,
+                max_new_tokens=max_length,
                 temperature=temperature,
                 top_p=top_p,
                 do_sample=True,

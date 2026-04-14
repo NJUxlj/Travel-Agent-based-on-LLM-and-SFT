@@ -1,32 +1,36 @@
-from dataclasses import dataclass  
-from typing import Optional, Dict , List, Tuple, Callable
-import os  
-import torch  
+from dataclasses import dataclass
+from typing import Optional, Dict, List, Tuple, Callable
+import os
+import torch
 import torch.nn as nn
-import torch.nn.functional as F  
-from torch.utils.data import Dataset  
-from transformers import (  
-    TrainingArguments,  
-    AutoTokenizer,  
-    # Qwen2ForCausalLM,  
+import torch.nn.functional as F
+from torch.utils.data import Dataset
+from transformers import (
+    TrainingArguments,
+    AutoTokenizer,
     BitsAndBytesConfig,
-    Trainer,  
+    Trainer,
     TrainerCallback,
-)  
+)
 
 from src.models.qwen2.modeling_qwen2 import Qwen2ForCausalLM
 from src.configs.config import (
-    REWARD_MODEL_PATH, 
-    MODEL_PATH, 
-    SFT_MODEL_PATH, 
-    PPO_MODEL_PATH, 
-    DPO_DATA_PATH, 
+    REWARD_MODEL_PATH,
+    MODEL_PATH,
+    SFT_MODEL_PATH,
+    PPO_MODEL_PATH,
+    DPO_DATA_PATH,
     CACHED_DPO_DATA_PATH,
     DPO_MODEL_PATH
 )
 
 
 from peft import LoraConfig, get_peft_model
+from src.finetune.base_trainer import (
+    init_model_and_tokenizer,
+    create_default_bnb_config,
+    create_default_lora_config,
+)
 from peft.peft_model import PeftModel, PeftModelForCausalLM
 from datasets import load_dataset, load_from_disk, DatasetDict
 # from trl import DPOTrainer  
@@ -208,47 +212,24 @@ class DPOTrainerWrapper:
     def _get_ref_model(self):
         """创建并返回参考模型"""
         ref_model = Qwen2ForCausalLM.from_pretrained(MODEL_PATH)
-        ref_model.load_state_dict(self.model.state_dict())
+        ref_model.load_state_dict(self.model.base_model.state_dict())
         ref_model = ref_model.to(self.device)
         ref_model.eval()
         for param in ref_model.parameters():
             param.requires_grad = False
         return ref_model
 
-    def _init_model_and_tokenizer(self, model_name, is_quantized, bnb_config):  
-        """初始化模型和分词器"""  
-        
-        
-        bnb_config = bnb_config or BitsAndBytesConfig(  
-            load_in_4bit=True,  
-            bnb_4bit_quant_type="nf4",  
-            bnb_4bit_compute_dtype=torch.bfloat16,  
-            bnb_4bit_use_double_quant=True,  
-        ) 
-        
-         
+    def _init_model_and_tokenizer(self, model_name, is_quantized, bnb_config):
+        """Initialize model and tokenizer using common utilities."""
+        return init_model_and_tokenizer(
+            model_name,
+            is_quantized,
+            bnb_config
+        )
 
-        tokenizer = AutoTokenizer.from_pretrained(model_name)  
-        tokenizer.pad_token = tokenizer.eos_token  
-
-        model = Qwen2ForCausalLM.from_pretrained(  
-            model_name,  
-            quantization_config=bnb_config if self.is_quantized else None,  
-            device_map="auto",  
-            trust_remote_code=True  
-        )  
-        return model, tokenizer  
-
-    def _default_lora_config(self):  
-        """默认LoRA配置"""  
-        return LoraConfig(  
-            r=64,  
-            lora_alpha=16,  
-            lora_dropout=0.05,  
-            target_modules=["q_proj", "v_proj"],  
-            bias="none",  
-            task_type="CAUSAL_LM"  
-        )  
+    def _default_lora_config(self):
+        """Get default LoRA configuration using common utilities."""
+        return create_default_lora_config()  
 
     def _load_cached_dataset(self, dataset_path=CACHED_DPO_DATA_PATH):
         if not os.path.exists(dataset_path):

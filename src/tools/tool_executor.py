@@ -13,7 +13,7 @@ import random
 from datetime import datetime  
 
 
-from src.agents.prompt_template import MyPromptTemplate
+from src.tools.prompt_template import MyPromptTemplate
 
 
 
@@ -77,14 +77,24 @@ class ToolDispatcher:
             return {"error": "Tool template not found"}  
         
         
-        # 参数类型校验  
-        for param in tool_template.parameters:  
-            if param.required and param.name not in parsed["args"]:  
-                return {"error": f"Missing required parameter: {param.name}"}  
-            if param.name in parsed["args"]:  
-                expected_type = param.type  
-                actual_value = parsed["args"][param.name]  
-                if not isinstance(actual_value, eval(expected_type)):  
+        # 参数类型校验
+        for param in tool_template.parameters:
+            if param.required and param.name not in parsed["args"]:
+                return {"error": f"Missing required parameter: {param.name}"}
+            if param.name in parsed["args"]:
+                expected_type = param.type
+                actual_value = parsed["args"][param.name]
+                # 使用安全的类型检查方式替代eval
+                type_map = {
+                    "int": int,
+                    "float": float,
+                    "str": str,
+                    "bool": bool,
+                    "list": list,
+                    "dict": dict,
+                }
+                expected = type_map.get(expected_type, object)
+                if not isinstance(actual_value, expected):
                     return {"error": f"Type mismatch for {param.name}, expected {expected_type}"}  
         
         print( "parse_args = ", parsed["args"])

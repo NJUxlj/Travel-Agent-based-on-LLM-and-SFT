@@ -12,15 +12,15 @@ try:
    from src.data.data_processor import TravelQAProcessor
 
 
-   from src.agents.rag import RAG
+   from src.rag.rag import RAG
 
-   from src.agents.rag import CityRAG
+   from src.rag.rag import CityRAG
 
 
 
-   from src.agents.agent import MyAgent
+   from src.agents.single_bfs_planning_agent import MyAgent
    
-   from src.agents.rag_dispatcher import RAGDispatcher
+   from src.rag.rag_dispatcher import RagDispatcher
    
    
 except Exception as e:

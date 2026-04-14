@@ -5,11 +5,11 @@ try:
     from pathlib import Path
     import os, sys
     sys.path.append(Path(__file__).parent.parent)
-    from agents.prompt_template import MyPromptTemplate
-    from agents.tools import ToolDispatcher
+    from src.tools.prompt_template import MyPromptTemplate
+    from src.tools.tool_executor import ToolDispatcher
     from typing import Dict, List, Optional, Tuple
-    from models.model import TravelAgent
-    from data.data_processor import CrossWOZProcessor
+    from src.models.model import TravelAgent
+    from src.data.data_processor import CrossWOZProcessor
 
 except Exception as e:
     print("rag: 导包出现问题：",str(e))
@@ -203,20 +203,13 @@ class RAG():
         print("===============================================")
         
     
-        batch_size = 100  
-        for i in range(0, len(self.dataset), batch_size):  
+        batch_size = 100
+        for i in range(0, len(self.dataset), batch_size):
             batch:List[str] = self.dataset[i:i+batch_size] if i+batch_size<=len(self.dataset) else self.dataset[i:len(self.dataset)]
             # print("batch = ", batch)
             print("type(batch) = ", type(batch))
-            
-            count = 0
-            for item in batch[field]:
-                print("item = ", item)
-                count+=1
-                if count==2:
-                    break
-                # raise ValueError("item stop")
-            documents = [str(item) for item in batch]  
+
+            documents = [str(item[field]) for item in batch]  
             metadatas = [{"source": "crosswoz"}] * len(documents)  
             ids = [str(idx) for idx in range(i, i+len(documents))]  
             

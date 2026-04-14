@@ -6,8 +6,8 @@ import os, sys
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.agents.agent import RAG  
-from src.agents.tools import ToolDispatcher  
+from src.rag.rag import RAG  
+from src.tools.tool_executor import ToolDispatcher  
 from src.models.model import TravelAgent  
 from src.configs.config import RAG_DATA_PATH, SFT_MODEL_PATH  
 

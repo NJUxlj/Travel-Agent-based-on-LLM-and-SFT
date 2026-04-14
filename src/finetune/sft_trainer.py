@@ -192,11 +192,11 @@ class SFTTrainer:
             weight_decay=0.01,  
             warmup_steps=100,
             warmup_ratio=0.03,  
-            lr_scheduler_type="cosine",  
-            # 改用 bf16 而不是 fp16，因为 bf16 数值稳定性更好  
-            bf16=True,  # 修改这里  
-            fp16=False, # 关闭 fp16 
-            # fp16=True,  
+            lr_scheduler_type="cosine",
+            # DeepSpeed使用自己的bf16/fp16配置，不需要在TrainingArguments中设置
+            # 这样可以避免冲突，DeepSpeed会在ds_config.json中配置 bf16 enabled: true
+            bf16=False,
+            fp16=False,  
             logging_dir="./logs",  # 指定日志目录  
             logging_strategy="steps",  
             logging_steps=100,  
